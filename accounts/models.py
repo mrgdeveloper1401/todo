@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, Abstr
 from django.utils.translation import gettext_lazy as _
 from core.models import UpdateMixixn, CreateMixin, SoftDeleteMixin
 from django_jalali.db import models as jmodels
+from accounts.managers import UserManagers
 
 
 class  Users(AbstractBaseUser, PermissionsMixin, UpdateMixixn, CreateMixin):
@@ -26,6 +27,8 @@ class  Users(AbstractBaseUser, PermissionsMixin, UpdateMixixn, CreateMixin):
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ('mobile_phone',)
+    
+    objects = UserManagers()
     
     class Meta:
         db_table = 'users'
