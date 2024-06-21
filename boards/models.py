@@ -1,7 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from core.models import CreateMixin, UpdateMixixn, CreateByMixin
 from todos.settings import AUTH_USER_MODEL
+from core.models import CreateMixin, UpdateMixixn, CreateByMixin, SoftDeleteMixin
+from accounts.models import ProfileUser
 from django_jalali.db import models as jmodels
 from workspaces.models import Workspace
 from images.models import Images
@@ -17,15 +18,14 @@ class BackgorundColor(CreateMixin, UpdateMixixn, CreateByMixin):
         verbose_name_plural = 'background_colors'
 
 
-class Board(CreateMixin, UpdateMixixn, CreateByMixin):
+class Board(CreateMixin, UpdateMixixn, CreateByMixin, SoftDeleteMixin):
     workspace = models.ForeignKey(Workspace, on_delete=models.PROTECT, related_name='workspace_boards')
-    board_title = models.CharField(max_length=50)
+    board_title = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
     background_image = models.ForeignKey(Images, on_delete=models.PROTECT, 
-                        related_name='bg_board', blank=True, null=True)
+                        related_name='bg_image_board', blank=True, null=True)
     Backgorund_color = models.ForeignKey(BackgorundColor, on_delete=models.PROTECT,
                                          related_name='bg_color_board')
-        
     
     class Meta:
         db_table = 'board'
@@ -33,38 +33,35 @@ class Board(CreateMixin, UpdateMixixn, CreateByMixin):
         verbose_name_plural = _('boards')
 
 
-class Card(CreateMixin, UpdateMixixn, CreateByMixin):
-    board = models.ForeignKey(Board, on_delete=models.PROTECT, related_name='board_cards')
-    title = models.CharField(max_length=100)
-    seen = models.BooleanField(default=False)
+class Card(CreateMixin, UpdateMixixn, CreateByMixin, SoftDeleteMixin):
+    workspace = models.ForeignKey(Workspace, on_delete=models.PROTECT, related_name='workspace_card')
+    board = models.ForeignKey(Board, on_delete=models.PROTECT, related_name='board_card')
+    card_title = models.CharField(max_length=100)
+    card_body = models.TextField()
+    expire_date = jmodels.jDateTimeField()
     is_active = models.BooleanField(default=True)
+    
+    class StatusCardChoices(models.TextChoices):
+        doing = 'doing', _('doing')
+        done = 'done', _('done')
+        defined = 'defined', _('defined')
+    card_status = models.CharField(max_length=7, choices=StatusCardChoices.choices)
     
     class Meta:
         db_table = 'card'
         verbose_name = _('card')
         verbose_name_plural = _('cards')
-        
 
-class Tasks(CreateMixin, UpdateMixixn, CreateByMixin):
-    card = models.ForeignKey(Card, on_delete=models.PROTECT, related_name='card_tasks')
-    task_title = models.CharField(max_length=100)
-    is_publish = models.BooleanField(default=True)
-    Backgorund_color = models.ForeignKey(BackgorundColor, on_delete=models.PROTECT,
-                                         related_name='bg_color_task')
-    members = models.ManyToManyField(AUTH_USER_MODEL, related_name='task_members')
-    validity_duration = jmodels.jDateTimeField()
+
+class ChatBoard(models.Model):
+    workspace = models.OneToOneField(Workspace, on_delete=models.PROTECT, related_name='workpace_chat_board')
+    board = models.OneToOneField(Board, on_delete=models.PROTECT, related_name='board_chat')
+    user = models.ManyToManyField(ProfileUser, related_name='profile_chat')
+    message = models.TextField()
+    reply_to = models.ForeignKey('self', related_name='reply_chat', on_delete=models.PROTECT)
+    is_active = models.BooleanField(default=True)
     
-
-class Comment(CreateMixin, UpdateMixixn, CreateByMixin):
-    body_comment = models.TextField()
-    is_publish = models.BooleanField(default=True)
-    task = models.ForeignKey(Tasks, on_delete=models.PROTECT, related_name='task_comments')
-    card = models.ForeignKey(Card, on_delete=models.PROTECT, related_name='card_comment')
-    board = models.ForeignKey(Board, related_name='board_comments', on_delete=models.PROTECT)
-    workspace = models.ForeignKey(Workspace, on_delete=models.PROTECT, related_name='worksapce_comments')
-    reply_to = models.ForeignKey('self', on_delete=models.Prefetch, related_name='childreen')
-        
     class Meta:
-        db_table = 'comments'
-        verbose_name = 'comment'
-        verbose_name_plural = 'comments'
+        db_table = 'chat_board'
+        verbose_name = _('chat board')
+        verbose_name_plural = _('chat boards')
