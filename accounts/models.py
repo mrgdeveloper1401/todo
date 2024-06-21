@@ -43,6 +43,9 @@ class ProfileUser(CreateMixin, UpdateMixixn, SoftDeleteMixin):
     birthday = jmodels.jDateField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     
+    def __str__(self):
+        return self.user.email
+    
     class Meta:
         db_table = 'profile_user'
         verbose_name = _('profile user')

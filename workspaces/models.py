@@ -10,7 +10,7 @@ class Workspace(CreateMixin, UpdateMixixn, SoftDeleteMixin):
     background_image = models.ForeignKey(Images, on_delete=models.PROTECT, related_name='workspace_image',
                               blank=True, null=True)
     workspace_description = models.TextField(blank=True, null=True)
-    members = models.ManyToManyField(ProfileUser, related_name='workspace_members')
+    members = models.ManyToManyField(ProfileUser, related_name='workspace_members', blank=True)
     is_active = models.BooleanField(default=True)
     
     class WorkspaceTypeChoices(models.TextChoices):
@@ -20,7 +20,9 @@ class Workspace(CreateMixin, UpdateMixixn, SoftDeleteMixin):
         personal = 'pr', _('personal')
     workspce_type = models.CharField(max_length=3, choices=WorkspaceTypeChoices.choices)
     
-        
+    def __str__(self):
+        return self.workspce_name
+
     class Meta:
         db_table = 'workspace'
         verbose_name = _("worspace")
